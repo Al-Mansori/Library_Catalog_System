@@ -1,19 +1,9 @@
-#include <iostteam>
+#include "LibraryCatalogSystem.h"
 using namespace std;
+int main() {
+    LibraryCatalogSystem catalogSystem;
 
-class Library
-{
-    Books books = new Books();
-    Authors authors = new Authors();
-    void add();
-    void update();
-    void Delete();
-    void print();
-    void query();
+    // Your main program logic here
 
-}
-
-int
-main()
-{
+    return 0;
 }
