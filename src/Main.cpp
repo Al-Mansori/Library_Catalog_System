@@ -1,4 +1,5 @@
 #include "LibraryCatalogSystem.h"
+#include <iostream>
 using namespace std;
 int main() {
     LibraryCatalogSystem catalogSystem;

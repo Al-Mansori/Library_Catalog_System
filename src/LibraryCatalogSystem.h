@@ -37,6 +37,8 @@ private:
     const string booksSecondaryIndexFileName = "books_secondary_index.txt";
 
     // Additional data structures for AVAIL LIST and other necessary components
+    vector<streampos> authorsAvailList;
+    vector<streampos> booksAvailList;
 
     // Index structures
     vector<PrimaryIndex> authorsPrimaryIndex;
