@@ -1,0 +1,2 @@
+-1
+$32B001|The Art of Programming|A001$$36B002|Introduction to Algorithms|A002$$32B003|Data Structures in C++|A003$$33B004|Artificial Intelligence|A004$$36B005|Database Design Principles|A005$$33B006|Machine Learning Basics|A001$$38B007|Web Development Fundamentals|A002$$26B008|Network Security|A003$$32B009|Mobile App Development|A004$$40B010|Software Engineering Practices|A005$

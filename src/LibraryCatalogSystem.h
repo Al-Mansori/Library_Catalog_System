@@ -2,6 +2,9 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
+#include <cstring>
+#include <limits>
 using namespace std;
 
 // Define Record structures for Authors and Books
@@ -25,16 +28,19 @@ struct PrimaryIndex {
 
 struct SecondaryIndex {
     char key[16]; // Extra byte for null terminator
-    vector<streampos> positions;
+    vector<string> positions;
 };
 
 class LibraryCatalogSystem {
 private:
     const string authorsFileName = "authors.txt";
     const string booksFileName = "books.txt";
-    const string authorsPrimaryIndexFileName = "authors_primary_index.txt";
-    const string booksPrimaryIndexFileName = "books_primary_index.txt";
-    const string booksSecondaryIndexFileName = "books_secondary_index.txt";
+    string authorsPrimaryIndexFileName = "authors_primary_index.txt";
+    string authorsSecondaryIndexFileName = "authors_secondary_index.txt";
+    string booksPrimaryIndexFileName = "books_primary_index.txt";
+    string booksSecondaryIndexFileName = "books_secondary_index.txt";
+    const int lengthIndicatorSize = 2;
+    string RRN;
 
     // Additional data structures for AVAIL LIST and other necessary components
     vector<streampos> authorsAvailList;
@@ -44,6 +50,7 @@ private:
     vector<PrimaryIndex> authorsPrimaryIndex;
     vector<PrimaryIndex> booksPrimaryIndex;
     vector<SecondaryIndex> booksSecondaryIndex;
+    vector<SecondaryIndex> authorsSecondaryIndex;
 
 public:
     // Function declarations for CRUD operations
@@ -64,6 +71,7 @@ public:
     void buildAuthorsPrimaryIndex();
     void buildBooksPrimaryIndex();
     void buildBooksSecondaryIndex();
+    void buildAuthorsSecondaryIndex();
 
     // Additional functions for handling indexes, AVAIL LIST, and file operations
 
@@ -71,5 +79,12 @@ public:
     void executeQuery(const string& query);
 
     // Function for user interface
-    void displayWelcomeScreen();
+    static void displayWelcomeScreen();
+
+    // to save the index
+    void saveAuthorsPrimaryIndex();
+    void saveBooksPrimaryIndex();
+    void saveAuthorsSecondaryIndex();
+    void saveBooksSecondaryIndex();
+
 };
