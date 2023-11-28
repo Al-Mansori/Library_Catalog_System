@@ -26,19 +26,175 @@ void LibraryCatalogSystem::updateBook(const BookRecord& updatedBook) {
 }
 
 AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
-    // Implementation
-    return AuthorRecord(); // Placeholder
+    // Binary search in the primary index
+    auto it = std::lower_bound(authorsPrimaryIndex.begin(), authorsPrimaryIndex.end(), authorID,
+                               [](const PrimaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+
+    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0) {
+        // Author ID found in the primary index
+        std::ifstream authorsFile(authorsFileName, std::ios::in | std::ios::binary);
+        authorsFile.seekg(it->position);
+
+        char delimiter;
+        authorsFile >> delimiter; // Read the delimiter ('$')
+
+        // Check if the record should be processed
+        if (delimiter == '*') {
+            // Ignore the record
+            authorsFile.close();
+            return AuthorRecord{"", "", ""};
+        }
+
+        char length_arr[lengthIndicatorSize];
+        authorsFile.read(length_arr, lengthIndicatorSize);
+        length_arr[lengthIndicatorSize] = '\0';
+
+        // Check if the record has a newline character after the length indicator
+        if (length_arr[0] == '\n') {
+            length_arr[0] = length_arr[1];
+            authorsFile >> length_arr[1];
+        }
+
+        int length = atoi(length_arr);
+
+        // Read the actual record data
+        char max_authors[length];
+        authorsFile.read(max_authors, length);
+        max_authors[length] = '\0';
+
+        AuthorRecord authorRecord{};
+
+        int count = 0;
+        int i = 0;
+
+        // Read ID
+        while (max_authors[i] != '|') {
+            authorRecord.authorID[count] = max_authors[i];
+            count++;
+            i++;
+        }
+        authorRecord.authorID[count] = '\0';
+        count = 0;
+        i++; // Skip the '|'
+
+        // Read Name
+        while (max_authors[i] != '|') {
+            authorRecord.authorName[count] = max_authors[i];
+            count++;
+            i++;
+        }
+        authorRecord.authorName[count] = '\0';
+        count = 0;
+        i++; // Skip the '|'
+
+        // Read Address
+        while (max_authors[i] != '\0') {
+            authorRecord.address[count] = max_authors[i];
+            count++;
+            i++;
+        }
+        authorRecord.address[count] = '\0';
+
+        authorsFile.close();
+
+        // Return the AuthorRecord
+        return authorRecord;
+    } else {
+        return AuthorRecord{"", "", ""};
+    }
 }
 
-std::vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char* authorID) {
+vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char* authorID) {
     // Implementation
-    return std::vector<BookRecord>(); // Placeholder
+    return vector<BookRecord>(); // Placeholder
 }
 
-std::string LibraryCatalogSystem::searchAuthorNameByID(const char* authorID) {
+vector<AuthorRecord> LibraryCatalogSystem::searchAuthorIDByName(const char* authorName){
     // Implementation
-    return ""; // Placeholder
+    return vector<AuthorRecord>(); // Placeholder
 }
+
+BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
+    // Binary search in the primary index
+    auto it = std::lower_bound(booksPrimaryIndex.begin(), booksPrimaryIndex.end(), ISBN,
+                               [](const PrimaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+
+    // Check if the book with the given ISBN exists
+    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0) {
+        // Read the book record using the position from the primary index
+        std::ifstream booksFile(booksFileName, std::ios::in | std::ios::binary);
+        booksFile.seekg(it->position);
+
+        char delimiter;
+        booksFile >> delimiter; // Read the delimiter ('$')
+
+        // Check if the record should be processed
+        if (delimiter == '*') {
+            // Ignore the record and move to the next
+            booksFile.close();
+            return BookRecord{"", "", ""};
+        }
+
+        char length_arr[lengthIndicatorSize];
+        booksFile.read(length_arr, lengthIndicatorSize);
+        length_arr[lengthIndicatorSize] = '\0';
+
+        // Check if the record has a newline character after the length indicator
+        if (length_arr[0] == '\n') {
+            length_arr[0] = length_arr[1];
+            booksFile >> length_arr[1];
+        }
+        int length = atoi(length_arr);
+
+        // Read the actual record data
+        char max_books[length];
+        booksFile.read(max_books, length);
+        max_books[length] = '\0';
+
+        int count = 0;
+        int i = 0;
+
+        BookRecord bookRecord{};
+
+        // Read ISBN
+        while (max_books[i] != '|') {
+            bookRecord.ISBN[count] = max_books[i];
+            count++;
+            i++;
+        }
+        bookRecord.ISBN[count] = '\0';
+        count = 0;
+        i++; // Skip the '|'
+
+        // Read Book Title
+        while (max_books[i] != '|') {
+            bookRecord.bookTitle[count] = max_books[i];
+            count++;
+            i++;
+        }
+        bookRecord.bookTitle[count] = '\0';
+        count = 0;
+        i++; // Skip the '|'
+
+        // Read Author ID
+        while (max_books[i] != '\0') {
+            bookRecord.authorID[count] = max_books[i];
+            count++;
+            i++;
+        }
+        booksFile.close();
+
+        // Return the BookRecord
+        return bookRecord;
+    } else {
+        return BookRecord{"", "", ""};
+    }
+}
+
 
 void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
     std::ifstream authorsFile(authorsFileName, std::ios::in);
@@ -544,6 +700,29 @@ void LibraryCatalogSystem::saveBooksSecondaryIndex(){
     }
 
     indexFile.close();
+}
+
+int LibraryCatalogSystem::getPositionsAuthorByID(const char* authorID){
+    // Binary search in the primary index
+    auto it = std::lower_bound(authorsPrimaryIndex.begin(), authorsPrimaryIndex.end(), authorID,
+                               [](const PrimaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+    // Check if the author with the given ID exists
+    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0){
+        return it->position;
+    }
+}
+int LibraryCatalogSystem::getPositionBookByISBN(const char* ISBN){
+    // Binary search in the primary index
+    auto it = std::lower_bound(booksPrimaryIndex.begin(), booksPrimaryIndex.end(), ISBN,
+                               [](const PrimaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+    // Check if the author with the given ID exists
+    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0){
+        return it->position;
+    }
 }
 
 void LibraryCatalogSystem::executeQuery(const string& query) {

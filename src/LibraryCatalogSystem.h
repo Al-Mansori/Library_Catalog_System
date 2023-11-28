@@ -64,8 +64,13 @@ public:
 
     // Function declarations for search operations
     AuthorRecord searchAuthorByID(const char* authorID);
+    BookRecord searchBookByISBN(const char* ISBN);
     vector<BookRecord> searchBooksByAuthorID(const char* authorID);
-    string searchAuthorNameByID(const char* authorID);
+    vector<AuthorRecord> searchAuthorIDByName(const char* authorName);
+
+    // Function to return the positions
+    int getPositionsAuthorByID(const char* authorID);
+    int getPositionBookByISBN(const char* ISBN);
 
     // Function declarations for index-related operations
     void buildAuthorsPrimaryIndex();
