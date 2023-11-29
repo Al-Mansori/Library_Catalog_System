@@ -57,7 +57,7 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
             authorsFile >> length_arr[1];
         }
 
-        int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
@@ -107,13 +107,60 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
 }
 
 vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char* authorID) {
-    // Implementation
-    return vector<BookRecord>(); // Placeholder
+    vector<BookRecord> books;
+    const char* ISBN;
+
+    // Find the book in the secondary index
+    auto it = std::lower_bound(booksSecondaryIndex.begin(), booksSecondaryIndex.end(), authorID,
+                               [](const SecondaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+
+    // Check if the author with the given name exists
+    if (it != booksSecondaryIndex.end() && std::strcmp(it->key, authorID) == 0) {
+        // Iterate over the positions (books) for this name in the secondary index
+        for (const auto& position : it->positions) {
+            ISBN = position.c_str();
+            // Use the key to search for the corresponding author record
+            BookRecord book = searchBookByISBN(ISBN);
+
+            // Check if the book with the given ISBN exists
+            if (std::strcmp(book.ISBN, "no") != 0) {
+                books.push_back(book);
+            }
+        }
+    }
+
+    return books;
 }
 
 vector<AuthorRecord> LibraryCatalogSystem::searchAuthorIDByName(const char* authorName){
-    // Implementation
-    return vector<AuthorRecord>(); // Placeholder
+    vector<AuthorRecord> authors;
+    const char* AuthorID;
+
+
+    // Find the author in the secondary index
+    auto it = std::lower_bound(authorsSecondaryIndex.begin(), authorsSecondaryIndex.end(), authorName,
+                               [](const SecondaryIndex& a, const char* b) {
+                                   return std::strcmp(a.key, b) < 0;
+                               });
+
+    // Check if the author with the given name exists
+    if (it != authorsSecondaryIndex.end() && std::strcmp(it->key, authorName) == 0) {
+        // Iterate over the positions (authors) for this name in the secondary index
+        for (const auto& position : it->positions) {
+           AuthorID = position.c_str();
+            // Use the key to search for the corresponding author record
+            AuthorRecord author = searchAuthorByID(AuthorID);
+
+            // Check if the author with the given ID exists
+            if (std::strcmp(author.authorID, "no") != 0) {
+                authors.push_back(author);
+            }
+        }
+    }
+
+    return authors;
 }
 
 BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
@@ -148,7 +195,7 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-        int length = atoi(length_arr);
+       const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -232,7 +279,7 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
             authorsFile >> length_arr[1];
         }
 
-        int length = atoi(length_arr);
+       const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
@@ -339,7 +386,7 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
             booksFile >> length_arr[1];
         }
 
-        int length = atoi(length_arr);
+       const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -434,7 +481,7 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-        int length = atoi(length_arr);
+      const  int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -529,7 +576,7 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
             length_arr[0] = length_arr[1];
             authorsFile >> length_arr[1];
         }
-        int length = atoi(length_arr);
+      const  int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
@@ -712,7 +759,9 @@ int LibraryCatalogSystem::getPositionsAuthorByID(const char* authorID){
     if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0){
         return it->position;
     }
+    return -1;
 }
+
 int LibraryCatalogSystem::getPositionBookByISBN(const char* ISBN){
     // Binary search in the primary index
     auto it = std::lower_bound(booksPrimaryIndex.begin(), booksPrimaryIndex.end(), ISBN,
@@ -723,6 +772,7 @@ int LibraryCatalogSystem::getPositionBookByISBN(const char* ISBN){
     if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0){
         return it->position;
     }
+    return -1;
 }
 
 void LibraryCatalogSystem::executeQuery(const string& query) {
