@@ -1,38 +1,142 @@
 #include "LibraryCatalogSystem.h"
 using namespace std;
 
-void LibraryCatalogSystem::addAuthor(const AuthorRecord& author) {
+void LibraryCatalogSystem::addAuthor(const AuthorRecord &author)
+{
     // Implementation
 }
 
-void LibraryCatalogSystem::deleteAuthor(const char* authorID) {
+void LibraryCatalogSystem::deleteAuthor(const char *authorID)
+{
     // Implementation
 }
 
-void LibraryCatalogSystem::updateAuthor(const AuthorRecord& updatedAuthor) {
+void LibraryCatalogSystem::updateAuthor(const AuthorRecord &updatedAuthor)
+{
     // Implementation
 }
 
-void LibraryCatalogSystem::addBook(const BookRecord& book) {
+void LibraryCatalogSystem::addBook(const BookRecord &book)
+{
+    // Implementation
+    fstream file("book.txt", ios::in);
+    string RRN;
+    file >> RRN;
+    file.close();
+    BookRecord newBook;
+
+    cout << "\nEnter Book ID: ";
+    string ISBN;
+    cin >> ISBN;
+    for (size_t i = 0; i < ISBN.size(); i++)
+    {
+        newBook.ISBN[i] = ISBN[i];
+    }
+
+    cout << "\nEnter Book Title: ";
+    string bookTitle;
+    cin >> bookTitle;
+    for (size_t i = 0; i < bookTitle.size(); i++)
+    {
+        newBook.bookTitle[i] = bookTitle[i];
+    }
+
+    cout << "\nEnter Author ID: ";
+    string authorID;
+    cin >> authorID;
+    for (size_t i = 0; i < authorID.size(); i++)
+    {
+        newBook.authorID[i] = authorID[i];
+    }
+
+    int newBookRecordSize = ISBN.size() + authorID.size() + bookTitle.size();
+
+    BookRecord resultBook = searchBookByISBN(newBook.ISBN);
+
+    if (resultBook.ISBN != newBook.ISBN)
+    {
+        fstream file("book.txt", ios::app);
+        if (RRN == "-1")
+        {
+            file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+        }
+
+        else
+        {
+            string tempRRN = RRN;
+            string preRRN;
+            string recordSize;
+            string pastRRN = "-1";
+            while (1)
+            {
+                file.seekg(stoi(tempRRN), ios_base::beg);
+                file.seekp(stoi(tempRRN), ios_base::beg);
+
+                file.get(); // get the * char
+                getline(file, preRRN, '|');
+                getline(file, recordSize, '|');
+
+                if (stoi(recordSize) >= newBookRecordSize)
+                {
+
+                    file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+                    if (stoi(recordSize) - newBookRecordSize >= 1)
+                    {
+                        file << "*";
+                    }
+                    if (pastRRN != "-1")
+                    {
+                        file.seekp(stoi(pastRRN), ios_base::beg);
+                        file << '*' << preRRN << '|';
+                    }
+                    else
+                    {
+
+                        RRN = preRRN;
+                    }
+                }
+
+                else
+                {
+                    if (tempRRN == "-1")
+                    {
+                        file.seekp(ios_base::end);
+                        file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+                        break;
+                    }
+                    pastRRN = tempRRN;
+                    tempRRN = preRRN;
+                }
+            }
+        }
+    }
+    else
+    {
+        cout << "\nBook is already exist! \n";
+    }
+}
+
+void LibraryCatalogSystem::deleteBook(const char *ISBN)
+{
     // Implementation
 }
 
-void LibraryCatalogSystem::deleteBook(const char* ISBN) {
+void LibraryCatalogSystem::updateBook(const BookRecord &updatedBook)
+{
     // Implementation
 }
 
-void LibraryCatalogSystem::updateBook(const BookRecord& updatedBook) {
-    // Implementation
-}
-
-AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
+AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char *authorID)
+{
     // Binary search in the primary index
     auto it = std::lower_bound(authorsPrimaryIndex.begin(), authorsPrimaryIndex.end(), authorID,
-                               [](const PrimaryIndex& a, const char* b) {
+                               [](const PrimaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
 
-    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0) {
+    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0)
+    {
         // Author ID found in the primary index
         std::ifstream authorsFile(authorsFileName, std::ios::in | std::ios::binary);
         authorsFile.seekg(it->position);
@@ -41,7 +145,8 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
         authorsFile >> delimiter; // Read the delimiter ('$')
 
         // Check if the record should be processed
-        if (delimiter == '*') {
+        if (delimiter == '*')
+        {
             // Ignore the record
             authorsFile.close();
             return AuthorRecord{"", "", ""};
@@ -52,7 +157,8 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
         length_arr[lengthIndicatorSize] = '\0';
 
         // Check if the record has a newline character after the length indicator
-        if (length_arr[0] == '\n') {
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             authorsFile >> length_arr[1];
         }
@@ -70,7 +176,8 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
         int i = 0;
 
         // Read ID
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             authorRecord.authorID[count] = max_authors[i];
             count++;
             i++;
@@ -80,7 +187,8 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
         i++; // Skip the '|'
 
         // Read Name
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             authorRecord.authorName[count] = max_authors[i];
             count++;
             i++;
@@ -90,7 +198,8 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
         i++; // Skip the '|'
 
         // Read Address
-        while (max_authors[i] != '\0') {
+        while (max_authors[i] != '\0')
+        {
             authorRecord.address[count] = max_authors[i];
             count++;
             i++;
@@ -101,31 +210,38 @@ AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
 
         // Return the AuthorRecord
         return authorRecord;
-    } else {
+    }
+    else
+    {
         return AuthorRecord{"", "", ""};
     }
 }
 
-vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char* authorID) {
+vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char *authorID)
+{
     vector<BookRecord> books;
-    const char* ISBN;
+    const char *ISBN;
 
     // Find the book in the secondary index
     auto it = std::lower_bound(booksSecondaryIndex.begin(), booksSecondaryIndex.end(), authorID,
-                               [](const SecondaryIndex& a, const char* b) {
+                               [](const SecondaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
 
     // Check if the author with the given name exists
-    if (it != booksSecondaryIndex.end() && std::strcmp(it->key, authorID) == 0) {
+    if (it != booksSecondaryIndex.end() && std::strcmp(it->key, authorID) == 0)
+    {
         // Iterate over the positions (books) for this name in the secondary index
-        for (const auto& position : it->positions) {
+        for (const auto &position : it->positions)
+        {
             ISBN = position.c_str();
             // Use the key to search for the corresponding author record
             BookRecord book = searchBookByISBN(ISBN);
 
             // Check if the book with the given ISBN exists
-            if (std::strcmp(book.ISBN, "no") != 0) {
+            if (std::strcmp(book.ISBN, "no") != 0)
+            {
                 books.push_back(book);
             }
         }
@@ -134,27 +250,31 @@ vector<BookRecord> LibraryCatalogSystem::searchBooksByAuthorID(const char* autho
     return books;
 }
 
-vector<AuthorRecord> LibraryCatalogSystem::searchAuthorIDByName(const char* authorName){
+vector<AuthorRecord> LibraryCatalogSystem::searchAuthorIDByName(const char *authorName)
+{
     vector<AuthorRecord> authors;
-    const char* AuthorID;
-
+    const char *AuthorID;
 
     // Find the author in the secondary index
     auto it = std::lower_bound(authorsSecondaryIndex.begin(), authorsSecondaryIndex.end(), authorName,
-                               [](const SecondaryIndex& a, const char* b) {
+                               [](const SecondaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
 
     // Check if the author with the given name exists
-    if (it != authorsSecondaryIndex.end() && std::strcmp(it->key, authorName) == 0) {
+    if (it != authorsSecondaryIndex.end() && std::strcmp(it->key, authorName) == 0)
+    {
         // Iterate over the positions (authors) for this name in the secondary index
-        for (const auto& position : it->positions) {
-           AuthorID = position.c_str();
+        for (const auto &position : it->positions)
+        {
+            AuthorID = position.c_str();
             // Use the key to search for the corresponding author record
             AuthorRecord author = searchAuthorByID(AuthorID);
 
             // Check if the author with the given ID exists
-            if (std::strcmp(author.authorID, "no") != 0) {
+            if (std::strcmp(author.authorID, "no") != 0)
+            {
                 authors.push_back(author);
             }
         }
@@ -163,15 +283,18 @@ vector<AuthorRecord> LibraryCatalogSystem::searchAuthorIDByName(const char* auth
     return authors;
 }
 
-BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
+BookRecord LibraryCatalogSystem::searchBookByISBN(const char *ISBN)
+{
     // Binary search in the primary index
     auto it = std::lower_bound(booksPrimaryIndex.begin(), booksPrimaryIndex.end(), ISBN,
-                               [](const PrimaryIndex& a, const char* b) {
+                               [](const PrimaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
 
     // Check if the book with the given ISBN exists
-    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0) {
+    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0)
+    {
         // Read the book record using the position from the primary index
         std::ifstream booksFile(booksFileName, std::ios::in | std::ios::binary);
         booksFile.seekg(it->position);
@@ -180,7 +303,8 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
         booksFile >> delimiter; // Read the delimiter ('$')
 
         // Check if the record should be processed
-        if (delimiter == '*') {
+        if (delimiter == '*')
+        {
             // Ignore the record and move to the next
             booksFile.close();
             return BookRecord{"", "", ""};
@@ -191,11 +315,12 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
         length_arr[lengthIndicatorSize] = '\0';
 
         // Check if the record has a newline character after the length indicator
-        if (length_arr[0] == '\n') {
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -208,7 +333,8 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
         BookRecord bookRecord{};
 
         // Read ISBN
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             bookRecord.ISBN[count] = max_books[i];
             count++;
             i++;
@@ -218,7 +344,8 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
         i++; // Skip the '|'
 
         // Read Book Title
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             bookRecord.bookTitle[count] = max_books[i];
             count++;
             i++;
@@ -228,7 +355,8 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
         i++; // Skip the '|'
 
         // Read Author ID
-        while (max_books[i] != '\0') {
+        while (max_books[i] != '\0')
+        {
             bookRecord.authorID[count] = max_books[i];
             count++;
             i++;
@@ -237,16 +365,19 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
 
         // Return the BookRecord
         return bookRecord;
-    } else {
+    }
+    else
+    {
         return BookRecord{"", "", ""};
     }
 }
 
-
-void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
+void LibraryCatalogSystem::buildAuthorsPrimaryIndex()
+{
     std::ifstream authorsFile(authorsFileName, std::ios::in);
 
-    if (!authorsFile.is_open()) {
+    if (!authorsFile.is_open())
+    {
         std::cerr << "Error opening authors.txt\n";
         return;
     }
@@ -256,14 +387,16 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
     // Read the Relative Record Number (RRN)
     authorsFile >> RRN;
 
-    while (!authorsFile.eof()) {
+    while (!authorsFile.eof())
+    {
         std::streampos position = authorsFile.tellg(); // Get the position before reading the record
 
         char delimiter;
         authorsFile >> delimiter; // Read the delimiter ('$')
 
         // Check if the record should be processed
-        if (delimiter == '*') {
+        if (delimiter == '*')
+        {
             // Ignore the record and move to the next
             authorsFile.ignore(std::numeric_limits<std::streamsize>::max(), '$');
             continue;
@@ -274,31 +407,34 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
         length_arr[lengthIndicatorSize] = '\0';
 
         // Check if the record has a newline character after the length indicator
-        if (length_arr[0] == '\n') {
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             authorsFile >> length_arr[1];
         }
 
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
         authorsFile.read(max_authors, length);
         max_authors[length] = '\0';
 
-        char id[16] = {0}; // 15 characters for ID plus null terminator
-        char name[31] = {0}; // 30 characters for Name plus null terminator
+        char id[16] = {0};      // 15 characters for ID plus null terminator
+        char name[31] = {0};    // 30 characters for Name plus null terminator
         char address[31] = {0}; // 30 characters for Address plus null terminator
 
         int count = 0;
         int i = 0;
 
-        if (authorsFile.eof()){
+        if (authorsFile.eof())
+        {
             break;
         }
 
         // Read ID
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             id[count] = max_authors[i];
             count++;
             i++;
@@ -308,7 +444,8 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
         i++; // Skip the '|'
 
         // Read Name
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             name[count] = max_authors[i];
             count++;
             i++;
@@ -318,7 +455,8 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
         i++; // Skip the '|'
 
         // Read Address
-        while (max_authors[i] != max_authors[length]) {
+        while (max_authors[i] != max_authors[length])
+        {
             address[count] = max_authors[i];
             count++;
             i++;
@@ -336,9 +474,10 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
     }
 
     authorsFile.close();
-// Sort the primary index based on the key before saving
+    // Sort the primary index based on the key before saving
     std::sort(authorsPrimaryIndex.begin(), authorsPrimaryIndex.end(),
-              [](const PrimaryIndex& a, const PrimaryIndex& b) {
+              [](const PrimaryIndex &a, const PrimaryIndex &b)
+              {
                   return std::strcmp(a.key, b.key) < 0;
               });
 
@@ -346,16 +485,18 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
     saveAuthorsPrimaryIndex();
 
     // Print the built primary index for testing
-//    std::cout << "Built Authors Primary Index:\n";
-//    for (const auto &index : authorsPrimaryIndex) {
-//        std::cout << "Key: " << index.key << ", Position: " << index.position << "\n";
-//    }
+    //    std::cout << "Built Authors Primary Index:\n";
+    //    for (const auto &index : authorsPrimaryIndex) {
+    //        std::cout << "Key: " << index.key << ", Position: " << index.position << "\n";
+    //    }
 }
 
-void LibraryCatalogSystem::buildBooksPrimaryIndex() {
-    std::ifstream booksFile(booksFileName , std::ios::in);
+void LibraryCatalogSystem::buildBooksPrimaryIndex()
+{
+    std::ifstream booksFile(booksFileName, std::ios::in);
 
-    if (!booksFile.is_open()) {
+    if (!booksFile.is_open())
+    {
         std::cerr << "Error opening books.txt\n";
         return;
     }
@@ -363,14 +504,16 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
     booksFile >> RRN;
     booksPrimaryIndexFileName.clear(); // Clear existing index
 
-    while (!booksFile.eof()) {
+    while (!booksFile.eof())
+    {
         std::streampos position = booksFile.tellg(); // Get the position before reading the record
 
         char delimiter;
         booksFile >> delimiter; // Read the delimiter ('$')
 
         // Check if the record should be processed
-        if (delimiter == '*') {
+        if (delimiter == '*')
+        {
             // Ignore the record and move to the next
             booksFile.ignore(std::numeric_limits<std::streamsize>::max(), '$');
             continue;
@@ -381,31 +524,34 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
         length_arr[lengthIndicatorSize] = '\0';
 
         // Check if the record has a newline character after the length indicator
-        if (length_arr[0] == '\n') {
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
 
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
         booksFile.read(max_books, length);
         max_books[length] = '\0';
 
-        char isbn[16] = {0}; // 15 characters for ISBN plus null terminator
+        char isbn[16] = {0};  // 15 characters for ISBN plus null terminator
         char title[31] = {0}; // 30 characters for Title plus null terminator
-        char aID[16] = {0}; // 15 characters for Author ID plus null terminator
+        char aID[16] = {0};   // 15 characters for Author ID plus null terminator
 
         int count = 0;
         int i = 0;
 
-        if (booksFile.eof()){
+        if (booksFile.eof())
+        {
             break;
         }
 
         // Read ISBN
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             isbn[count] = max_books[i];
             count++;
             i++;
@@ -415,7 +561,8 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
         i++; // Skip the '|'
 
         // Read Title
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             title[count] = max_books[i];
             count++;
             i++;
@@ -425,7 +572,8 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
         i++; // Skip the '|'
 
         // Read Authors ID
-        while (max_books[i] != '\0') {
+        while (max_books[i] != '\0')
+        {
             aID[count] = max_books[i];
             count++;
             i++;
@@ -434,39 +582,38 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
 
         booksFile >> delimiter;
 
-
         // Build the primary index
         PrimaryIndex index;
         strcpy(index.key, isbn);
         index.position = position;
 
         booksPrimaryIndex.push_back(index);
-
-
-
     }
 
     booksFile.close();
-// Sort the primary index based on the key before saving
+    // Sort the primary index based on the key before saving
     std::sort(booksPrimaryIndex.begin(), booksPrimaryIndex.end(),
-              [](const PrimaryIndex& a, const PrimaryIndex& b) {
+              [](const PrimaryIndex &a, const PrimaryIndex &b)
+              {
                   return std::strcmp(a.key, b.key) < 0;
               });
 
-//     Save the primary index to authors_primary_index.dat
-        saveBooksPrimaryIndex();
+    //     Save the primary index to authors_primary_index.dat
+    saveBooksPrimaryIndex();
 
     // Print the built primary index for testing
-//    std::cout << "Built Books Primary Index:\n";
-//    for (const auto &index : booksPrimaryIndex) {
-//        std::cout << "Key: " << index.key << ", Position: " << index.position << "\n";
-//    }
+    //    std::cout << "Built Books Primary Index:\n";
+    //    for (const auto &index : booksPrimaryIndex) {
+    //        std::cout << "Key: " << index.key << ", Position: " << index.position << "\n";
+    //    }
 }
 
-void LibraryCatalogSystem::buildBooksSecondaryIndex() {
+void LibraryCatalogSystem::buildBooksSecondaryIndex()
+{
     booksSecondaryIndexFileName.clear(); // Clear existing secondary index
 
-    for (const auto &index : booksPrimaryIndex){
+    for (const auto &index : booksPrimaryIndex)
+    {
         // Read the book record using the position from the primary index
         std::ifstream booksFile(booksFileName, std::ios::in | std::ios::binary);
         booksFile.seekg(index.position);
@@ -477,27 +624,28 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
         char length_arr[lengthIndicatorSize];
         booksFile.read(length_arr, lengthIndicatorSize);
         length_arr[lengthIndicatorSize] = '\0';
-        if (length_arr[0]== '\n'){
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-      const  int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
         booksFile.read(max_books, length);
         max_books[length] = '\0';
 
-        char isbn[16] = {0}; // 15 characters for ISBN plus null terminator
+        char isbn[16] = {0};  // 15 characters for ISBN plus null terminator
         char title[31] = {0}; // 30 characters for Title plus null terminator
-        char aID[16] = {0}; // 15 characters for Author ID plus null terminator
+        char aID[16] = {0};   // 15 characters for Author ID plus null terminator
 
         int count = 0;
         int i = 0;
 
-
         // Read ISBN
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             isbn[count] = max_books[i];
             count++;
             i++;
@@ -507,7 +655,8 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
         i++; // Skip the '|'
 
         // Read Title
-        while (max_books[i] != '|') {
+        while (max_books[i] != '|')
+        {
             title[count] = max_books[i];
             count++;
             i++;
@@ -517,13 +666,13 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
         i++; // Skip the '|'
 
         // Read Authors ID
-        while (max_books[i] != '\0') {
+        while (max_books[i] != '\0')
+        {
             aID[count] = max_books[i];
             count++;
             i++;
         }
         aID[count] = '\0';
-
 
         // Build the secondary index
         SecondaryIndex secondaryIndex;
@@ -532,25 +681,29 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
 
         // Check if the key already exists in the secondary index
         auto it = std::find_if(booksSecondaryIndex.begin(), booksSecondaryIndex.end(),
-                               [&secondaryIndex](const SecondaryIndex& s) {
+                               [&secondaryIndex](const SecondaryIndex &s)
+                               {
                                    return std::strcmp(s.key, secondaryIndex.key) == 0;
                                });
 
-        if (it != booksSecondaryIndex.end()) {
+        if (it != booksSecondaryIndex.end())
+        {
             // Key exists, append position to existing entry
             it->positions.emplace_back(isbn);
-        } else {
+        }
+        else
+        {
             // Key does not exist, add a new entry
             booksSecondaryIndex.push_back(secondaryIndex);
         }
 
         booksFile.close();
-
     }
 
     // Sort the secondary index based on the key (Author ID)
     std::sort(booksSecondaryIndex.begin(), booksSecondaryIndex.end(),
-              [](const SecondaryIndex& a, const SecondaryIndex& b) {
+              [](const SecondaryIndex &a, const SecondaryIndex &b)
+              {
                   return std::strcmp(a.key, b.key) < 0;
               });
 
@@ -558,10 +711,12 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
     saveBooksSecondaryIndex();
 }
 
-void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
+void LibraryCatalogSystem::buildAuthorsSecondaryIndex()
+{
     authorsSecondaryIndexFileName.clear(); // Clear existing secondary index
 
-    for (const auto &index : authorsPrimaryIndex) {
+    for (const auto &index : authorsPrimaryIndex)
+    {
         // Read the author record using the position from the primary index
         std::ifstream authorsFile(authorsFileName, std::ios::in | std::ios::binary);
         authorsFile.seekg(index.position);
@@ -572,26 +727,28 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
         char length_arr[lengthIndicatorSize];
         authorsFile.read(length_arr, lengthIndicatorSize);
         length_arr[lengthIndicatorSize] = '\0';
-        if (length_arr[0]== '\n'){
+        if (length_arr[0] == '\n')
+        {
             length_arr[0] = length_arr[1];
             authorsFile >> length_arr[1];
         }
-      const  int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
         authorsFile.read(max_authors, length);
         max_authors[length] = '\0';
 
-        char id[16] = {0}; // 15 characters for ID plus null terminator
-        char name[31] = {0}; // 30 characters for Name plus null terminator
+        char id[16] = {0};      // 15 characters for ID plus null terminator
+        char name[31] = {0};    // 30 characters for Name plus null terminator
         char address[31] = {0}; // 30 characters for Address plus null terminator
 
         int count = 0;
         int i = 0;
 
         // Read ID
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             id[count] = max_authors[i];
             count++;
             i++;
@@ -601,7 +758,8 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
         i++; // Skip the '|'
 
         // Read Name
-        while (max_authors[i] != '|') {
+        while (max_authors[i] != '|')
+        {
             name[count] = max_authors[i];
             count++;
             i++;
@@ -611,14 +769,13 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
         i++; // Skip the '|'
 
         // Read Address
-        while (max_authors[i] != '\0') {
+        while (max_authors[i] != '\0')
+        {
             address[count] = max_authors[i];
             count++;
             i++;
         }
         address[count] = '\0';
-
-
 
         // Build the secondary index
         SecondaryIndex secondaryIndex;
@@ -627,14 +784,18 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
 
         // Check if the key already exists in the secondary index
         auto it = std::find_if(authorsSecondaryIndex.begin(), authorsSecondaryIndex.end(),
-                               [&secondaryIndex](const SecondaryIndex& s) {
+                               [&secondaryIndex](const SecondaryIndex &s)
+                               {
                                    return std::strcmp(s.key, secondaryIndex.key) == 0;
                                });
 
-        if (it != authorsSecondaryIndex.end()) {
+        if (it != authorsSecondaryIndex.end())
+        {
             // Key exists, append position to existing entry
             it->positions.emplace_back(id);
-        } else {
+        }
+        else
+        {
             // Key does not exist, add a new entry
             authorsSecondaryIndex.push_back(secondaryIndex);
         }
@@ -644,7 +805,8 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
 
     // Sort the secondary index based on the key (Author Name)
     std::sort(authorsSecondaryIndex.begin(), authorsSecondaryIndex.end(),
-              [](const SecondaryIndex& a, const SecondaryIndex& b) {
+              [](const SecondaryIndex &a, const SecondaryIndex &b)
+              {
                   return std::strcmp(a.key, b.key) < 0;
               });
 
@@ -652,7 +814,8 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
     saveAuthorsSecondaryIndex();
 }
 
-void LibraryCatalogSystem::displayWelcomeScreen() {
+void LibraryCatalogSystem::displayWelcomeScreen()
+{
     cout << "Welcome to the Library Catalog System\n";
     cout << "--------------------------------------\n";
     cout << "1. Add New Author\n";
@@ -668,15 +831,18 @@ void LibraryCatalogSystem::displayWelcomeScreen() {
     cout << "--------------------------------------\n";
 }
 
-void LibraryCatalogSystem::saveAuthorsPrimaryIndex(){
+void LibraryCatalogSystem::saveAuthorsPrimaryIndex()
+{
     std::ofstream indexFile("authors_primary_index.txt", std::ios::out | std::ios::binary);
 
-    if (!indexFile.is_open()) {
+    if (!indexFile.is_open())
+    {
         std::cerr << "Error opening authors_primary_index.dat\n";
         return;
     }
 
-    for (const auto &index : authorsPrimaryIndex) {
+    for (const auto &index : authorsPrimaryIndex)
+    {
         // Write the key and position to the index file
         indexFile.write(index.key, strlen(index.key));
         indexFile << " " << index.position;
@@ -684,22 +850,25 @@ void LibraryCatalogSystem::saveAuthorsPrimaryIndex(){
     }
 
     indexFile.close();
-
 }
 
-void LibraryCatalogSystem::saveAuthorsSecondaryIndex(){
+void LibraryCatalogSystem::saveAuthorsSecondaryIndex()
+{
     std::ofstream indexFile("authors_secondary_index.txt", std::ios::out);
 
-    if (!indexFile.is_open()) {
+    if (!indexFile.is_open())
+    {
         std::cerr << "Error opening authors_secondary_index.dat\n";
         return;
     }
 
-    for (const auto &index : authorsSecondaryIndex) {
+    for (const auto &index : authorsSecondaryIndex)
+    {
         // Write the key and positions to the index file
         indexFile.write(index.key, strlen(index.key));
 
-        for (const auto &pos : index.positions) {
+        for (const auto &pos : index.positions)
+        {
             indexFile << " " << pos; // Write positions as a string
         }
 
@@ -709,15 +878,18 @@ void LibraryCatalogSystem::saveAuthorsSecondaryIndex(){
     indexFile.close();
 }
 
-void LibraryCatalogSystem::saveBooksPrimaryIndex(){
+void LibraryCatalogSystem::saveBooksPrimaryIndex()
+{
     std::ofstream indexFile("books_primary_index.txt", std::ios::out | std::ios::binary);
 
-    if (!indexFile.is_open()) {
+    if (!indexFile.is_open())
+    {
         std::cerr << "Error opening authors_primary_index.dat\n";
         return;
     }
 
-    for (const auto &index : booksPrimaryIndex) {
+    for (const auto &index : booksPrimaryIndex)
+    {
         // Write the key and position to the index file
         indexFile.write(index.key, strlen(index.key));
         indexFile << " " << index.position;
@@ -727,19 +899,23 @@ void LibraryCatalogSystem::saveBooksPrimaryIndex(){
     indexFile.close();
 }
 
-void LibraryCatalogSystem::saveBooksSecondaryIndex(){
-    std::ofstream indexFile( "books_secondary_index.txt", std::ios::out);
+void LibraryCatalogSystem::saveBooksSecondaryIndex()
+{
+    std::ofstream indexFile("books_secondary_index.txt", std::ios::out);
 
-    if (!indexFile.is_open()) {
+    if (!indexFile.is_open())
+    {
         std::cerr << "Error opening books_secondary_index.dat\n";
         return;
     }
 
-    for (const auto &index : booksSecondaryIndex) {
+    for (const auto &index : booksSecondaryIndex)
+    {
         // Write the key and positions to the index file
         indexFile.write(index.key, strlen(index.key));
 
-        for (const auto &pos : index.positions) {
+        for (const auto &pos : index.positions)
+        {
             indexFile << " " << pos; // Write positions as a string
         }
 
@@ -749,33 +925,39 @@ void LibraryCatalogSystem::saveBooksSecondaryIndex(){
     indexFile.close();
 }
 
-int LibraryCatalogSystem::getPositionsAuthorByID(const char* authorID){
+int LibraryCatalogSystem::getPositionsAuthorByID(const char *authorID)
+{
     // Binary search in the primary index
     auto it = std::lower_bound(authorsPrimaryIndex.begin(), authorsPrimaryIndex.end(), authorID,
-                               [](const PrimaryIndex& a, const char* b) {
+                               [](const PrimaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
     // Check if the author with the given ID exists
-    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0){
+    if (it != authorsPrimaryIndex.end() && std::strcmp(it->key, authorID) == 0)
+    {
         return it->position;
     }
     return -1;
 }
 
-int LibraryCatalogSystem::getPositionBookByISBN(const char* ISBN){
+int LibraryCatalogSystem::getPositionBookByISBN(const char *ISBN)
+{
     // Binary search in the primary index
     auto it = std::lower_bound(booksPrimaryIndex.begin(), booksPrimaryIndex.end(), ISBN,
-                               [](const PrimaryIndex& a, const char* b) {
+                               [](const PrimaryIndex &a, const char *b)
+                               {
                                    return std::strcmp(a.key, b) < 0;
                                });
     // Check if the author with the given ID exists
-    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0){
+    if (it != booksPrimaryIndex.end() && std::strcmp(it->key, ISBN) == 0)
+    {
         return it->position;
     }
     return -1;
 }
 
-void LibraryCatalogSystem::executeQuery(const string& query) {
+void LibraryCatalogSystem::executeQuery(const string &query)
+{
     // Implementation
 }
-

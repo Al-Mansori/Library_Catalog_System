@@ -5,33 +5,39 @@
 #include <iomanip>
 #include <cstring>
 #include <limits>
+#include <string>
 using namespace std;
 
 // Define Record structures for Authors and Books
-struct AuthorRecord {
-    char authorID[16]; // Extra byte for null terminator
+struct AuthorRecord
+{
+    char authorID[16];   // Extra byte for null terminator
     char authorName[31]; // Extra byte for null terminator
-    char address[31]; // Extra byte for null terminator
+    char address[31];    // Extra byte for null terminator
 };
 
-struct BookRecord {
-    char ISBN[16]; // Extra byte for null terminator
+struct BookRecord
+{
+    char ISBN[16];      // Extra byte for null terminator
     char bookTitle[31]; // Extra byte for null terminator
-    char authorID[16]; // Extra byte for null terminator
+    char authorID[16];  // Extra byte for null terminator
 };
 
 // Define Index structures
-struct PrimaryIndex {
+struct PrimaryIndex
+{
     char key[16]; // Extra byte for null terminator
     streampos position;
 };
 
-struct SecondaryIndex {
+struct SecondaryIndex
+{
     char key[16]; // Extra byte for null terminator
     vector<string> positions;
 };
 
-class LibraryCatalogSystem {
+class LibraryCatalogSystem
+{
 private:
     const string authorsFileName = "authors.txt";
     const string booksFileName = "books.txt";
@@ -54,23 +60,23 @@ private:
 
 public:
     // Function declarations for CRUD operations
-    void addAuthor(const AuthorRecord& author);
-    void deleteAuthor(const char* authorID);
-    void updateAuthor(const AuthorRecord& updatedAuthor);
+    void addAuthor(const AuthorRecord &author);
+    void deleteAuthor(const char *authorID);
+    void updateAuthor(const AuthorRecord &updatedAuthor);
 
-    void addBook(const BookRecord& book);
-    void deleteBook(const char* ISBN);
-    void updateBook(const BookRecord& updatedBook);
+    void addBook(const BookRecord &book);
+    void deleteBook(const char *ISBN);
+    void updateBook(const BookRecord &updatedBook);
 
     // Function declarations for search operations
-    AuthorRecord searchAuthorByID(const char* authorID);
-    BookRecord searchBookByISBN(const char* ISBN);
-    vector<BookRecord> searchBooksByAuthorID(const char* authorID);
-    vector<AuthorRecord> searchAuthorIDByName(const char* authorName);
+    AuthorRecord searchAuthorByID(const char *authorID);
+    BookRecord searchBookByISBN(const char *ISBN);
+    vector<BookRecord> searchBooksByAuthorID(const char *authorID);
+    vector<AuthorRecord> searchAuthorIDByName(const char *authorName);
 
     // Function to return the positions
-    int getPositionsAuthorByID(const char* authorID);
-    int getPositionBookByISBN(const char* ISBN);
+    int getPositionsAuthorByID(const char *authorID);
+    int getPositionBookByISBN(const char *ISBN);
 
     // Function declarations for index-related operations
     void buildAuthorsPrimaryIndex();
@@ -81,7 +87,7 @@ public:
     // Additional functions for handling indexes, AVAIL LIST, and file operations
 
     // Function to parse and execute user queries
-    void executeQuery(const string& query);
+    void executeQuery(const string &query);
 
     // Function for user interface
     static void displayWelcomeScreen();
@@ -91,5 +97,4 @@ public:
     void saveBooksPrimaryIndex();
     void saveAuthorsSecondaryIndex();
     void saveBooksSecondaryIndex();
-
 };
