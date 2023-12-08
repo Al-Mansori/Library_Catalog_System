@@ -73,9 +73,9 @@ public:
     void deleteAuthor(const char* authorID);
     void updateAuthor(const AuthorRecord& updatedAuthor);
 
-    void addBook(const BookRecord& book);
+    void addBook();
     void deleteBook(const char* ISBN);
-    void updateBook(const BookRecord& updatedBook);
+    void updateBook();
 
     // Function declarations for search operations
     AuthorRecord searchAuthorByID(const char* authorID);

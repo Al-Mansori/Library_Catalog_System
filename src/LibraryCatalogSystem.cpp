@@ -13,7 +13,7 @@ void LibraryCatalogSystem::updateAuthor(const AuthorRecord& updatedAuthor) {
     // Implementation
 }
 
-void LibraryCatalogSystem::addBook(const BookRecord &book)
+void LibraryCatalogSystem::addBook() //TESTED
 {
     // Implementation
     fstream file(booksFileName, ios::in);
@@ -31,95 +31,233 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
     }
     newBook.ISBN[ISBN.size()]='\0';
 
-    cout << "\nEnter Book Title: ";
-    string bookTitle;
-    cin >> bookTitle;
-    for (size_t i = 0; i < bookTitle.size(); i++)
-    {
-        newBook.bookTitle[i] = bookTitle[i];
-    }
-
-    cout << "\nEnter Author ID: ";
-    string authorID;
-    cin >> authorID;
-    for (size_t i = 0; i < authorID.size(); i++)
-    {
-        newBook.authorID[i] = authorID[i];
-    }
-
-    int newBookRecordSize = ISBN.size() + authorID.size() + bookTitle.size();
 
     BookRecord resultBook = searchBookByISBN(newBook.ISBN);
 
-    if (resultBook.ISBN != newBook.ISBN)
+    if (string(resultBook.ISBN) != string( newBook.ISBN))
     {
-        fstream file(booksFileName, ios::app);
+        cout << "\nEnter Book Title: ";
+        string bookTitle;
+        cin >> bookTitle;
+        for (size_t i = 0; i < bookTitle.size(); i++)
+        {
+            newBook.bookTitle[i] = bookTitle[i];
+        }
+
+        cout << "\nEnter Author ID: ";
+        string authorID;
+        cin >> authorID;
+        for (size_t i = 0; i < authorID.size(); i++)
+        {
+            newBook.authorID[i] = authorID[i];
+        }
+
+        int newBookRecordSize = ISBN.size() + authorID.size() + bookTitle.size();
+
+
+
+        fstream file(booksFileName, ios::in | ios::out);
         if (RRN == "-1")
         {
-            file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
+            file << '$' << newBookRecordSize+2 << ISBN <<"|"<< bookTitle <<"|"<< authorID << '$';
+
         }
 
         else
         {
             string tempRRN = RRN;
-            string preRRN;
+            string nextRRN;
+            string prevRRN = "-1";
             string recordSize;
-            string pastRRN = "-1";
-            while (1)
-            {
-                file.seekg(stoi(tempRRN), ios_base::beg);
-                file.seekp(stoi(tempRRN), ios_base::beg);
 
-                file.get(); // get the * char
-                getline(file, preRRN, '|');
+            while (true)
+            {
+                file.seekg(stoi(tempRRN), ios::beg);
+                file.seekp(stoi(tempRRN), ios::beg);
+
+                char del;
+                file>>del; // get the * char
+
+
+
+                getline(file, nextRRN, '|');
                 getline(file, recordSize, '|');
 
                 if (stoi(recordSize) >= newBookRecordSize)
                 {
+                    file.seekp(stoi(tempRRN), ios::beg);
+                    file << '$' << newBookRecordSize+2 << ISBN <<"|"<< bookTitle <<"|"<< authorID << '$';
 
-                    file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
-                    if (stoi(recordSize) - newBookRecordSize >= 1)
+                    if (stoi(recordSize) - newBookRecordSize > 1)
                     {
                         file << "*";
                     }
-                    if (pastRRN != "-1")
-                    {
-                        file.seekp(stoi(pastRRN), ios_base::beg);
-                        file << '*' << preRRN << '|';
-                    }
-                    else
-                    {
 
-                        RRN = preRRN;
+                    file.seekp(ios::beg);
+
+
+
+
+                    if(RRN.size()<=prevRRN.size()){
+
+                        file<<prevRRN;
+                        RRN = prevRRN;
                     }
+                    else{
+                        file<<prevRRN;
+                        for (int i = 0; i < (RRN.size()-prevRRN.size()); ++i) {
+                            file<<" ";
+                        }
+                    }
+
+
+                    break;
                 }
 
                 else
                 {
                     if (tempRRN == "-1")
                     {
-                        file.seekp(ios_base::end);
-                        file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
+                        file.seekp(ios::end);
+                        file << '$' << newBookRecordSize+2 << ISBN <<"|"<< bookTitle <<"|"<< authorID << '$';
+
                         break;
                     }
-                    pastRRN = tempRRN;
-                    tempRRN = preRRN;
+                    else{
+
+                        prevRRN = tempRRN;
+                        tempRRN = nextRRN;
+                    }
                 }
             }
         }
+        cout<<"\nsuccessfully Added!\n";
+
+        file.close();
     }
     else
     {
         cout << "\nBook is already exist! \n";
     }
 }
-void LibraryCatalogSystem::deleteBook(const char* ISBN) {
+void LibraryCatalogSystem::deleteBook(const char* ISBN ) {//TESTED
     // Implementation
+
+
+
+
+    int res = getPositionBookByISBN(ISBN);
+    if(res != -1){
+        fstream file (booksFileName,ios::in|ios::out);
+
+        string RRN;
+        file>>RRN;
+        file.seekg(res,ios::beg);
+        char recordSize[2];
+        char del;
+        file>>del;
+        file.read( recordSize,2);
+
+
+        file.seekp(res,ios::beg);
+        file<<"*";
+        file<<RRN<<"|"<<atoi(recordSize)<<"|";
+
+        file.seekp(ios::beg);
+
+        if(RRN.size()<=to_string(res).size()){
+
+            file<<res;
+            RRN = res;
+        }
+        else{
+            file<<res;
+            for (int i = 0; i < (RRN.size()-to_string(res).size()); ++i) {
+                file<<" ";
+            }
+        }
+
+        cout<<"\nsuccessfully deleted!\n";
+        file.close();
+    }
+    else{
+        cout<<"\nBook doesn't exist!\n";
+    }
+
+}
+void LibraryCatalogSystem::updateBook() {//TESTED
+    // Implementation
+    cout<<"\nEnter Book ID to Update the Book's Title: ";
+    string ISBN;
+    cin>>ISBN;
+
+
+
+    int res = getPositionBookByISBN(ISBN.c_str());
+    if(res != -1){
+        fstream file (booksFileName,ios::in | ios::out);
+        cout<<"\nEnter New Title : ";
+        string newTitle;
+        cin>>newTitle;
+        string recordTitle;
+        string temp;
+
+        file.seekg(res,ios::beg);
+
+        getline(file, temp, '|');
+        char del;
+        file>>del;
+        getline(file, recordTitle, '|');
+
+        if(recordTitle.size()>= newTitle.size()){
+            file.seekp((res+temp.size()+1),ios::beg);
+            file<<newTitle;
+            for (int i = 0; i < (recordTitle.size() - newTitle.size())+1; ++i) {
+                file<<" ";
+            }
+        }
+        else{
+
+            file.seekg(res ,ios::beg);
+            char del;
+            file>>del;
+
+            char size[2];
+            file.read(size,2);
+
+
+
+            string idRecord;
+            string titleRecord;
+            string authRecord;
+            getline(file,idRecord,'|');
+
+            getline(file,titleRecord,'|');
+
+            getline(file,authRecord,'$');
+
+
+
+            deleteBook(ISBN.c_str());
+
+            int newSize = idRecord.size()+newTitle.size()+authRecord.size()+2;
+
+            file.close();
+            fstream  file(booksFileName,ios::app)   ;
+
+
+            file<<"$"<<newSize<<idRecord<<'|'<<newTitle<<'|'<<authRecord<<'$';
+
+        }
+        cout<<"\nsuccessfully Updated!\n";
+
+        file.close();
+    }
+    else{
+        cout<<"\nBook doesn't exist!\n";
+    }
 }
 
-void LibraryCatalogSystem::updateBook(const BookRecord& updatedBook) {
-    // Implementation
-}
 
 AuthorRecord LibraryCatalogSystem::searchAuthorByID(const char* authorID) {
     // Binary search in the primary index
@@ -335,7 +473,7 @@ BookRecord LibraryCatalogSystem::searchBookByISBN(const char* ISBN){
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -419,7 +557,7 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
             authorsFile >> length_arr[1];
         }
 
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
@@ -526,7 +664,7 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
             booksFile >> length_arr[1];
         }
 
-       const int length = atoi(length_arr);
+        const int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -594,7 +732,7 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
               });
 
 //     Save the primary index to authors_primary_index.dat
-        saveBooksPrimaryIndex();
+    saveBooksPrimaryIndex();
 
     // Print the built primary index for testing
 //    std::cout << "Built Books Primary Index:\n";
@@ -622,7 +760,7 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
             length_arr[0] = length_arr[1];
             booksFile >> length_arr[1];
         }
-      const  int length = atoi(length_arr);
+        const  int length = atoi(length_arr);
 
         // Read the actual record data
         char max_books[length];
@@ -731,7 +869,7 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
             length_arr[0] = length_arr[1];
             authorsFile >> length_arr[1];
         }
-      const  int length = atoi(length_arr);
+        const  int length = atoi(length_arr);
 
         // Read the actual record data
         char max_authors[length];
@@ -1025,33 +1163,39 @@ void LibraryCatalogSystem::run() {
     BookRecord book{};
     string bookISBN;
     const char* ISBN;
-    buildAuthorsPrimaryIndex();
-    buildAuthorsSecondaryIndex();
-    buildBooksPrimaryIndex();
-    buildBooksSecondaryIndex();
+
 
     while (play) {
         displayWelcomeScreen();
-
+        buildAuthorsPrimaryIndex();
+        buildAuthorsSecondaryIndex();
+        buildBooksPrimaryIndex();
+        buildBooksSecondaryIndex();
+        
         int choice;
         cout << "Enter your choice: ";
         cin >> choice;
 
         switch (choice) {
             case 1:
-                // Add New Author logic
                 break;
             case 2:
-                // Add New Book logic
+                    addBook();
                 break;
             case 3:
                 // Update Author Name (Author ID) logic
                 break;
             case 4:
-                // Update Book Title (ISBN) logic
+                updateBook();
                 break;
-            case 5:
-                // Delete Book (ISBN) logic
+            case 5:{
+                cout<<"\nEnter Book ID to Delete the Book: ";
+
+                string ISBN;
+                cin>>ISBN;
+                deleteBook(ISBN.c_str());
+
+            }
                 break;
             case 6:
                 // Delete Author (Author ID) logic
