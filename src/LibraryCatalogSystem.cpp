@@ -529,6 +529,7 @@ void LibraryCatalogSystem::buildAuthorsPrimaryIndex() {
         return;
     }
     // Clear existing index
+    authorsPrimaryIndexFileName.clear();
     authorsPrimaryIndex.clear();
 
     // Read the Relative Record Number (RRN)
@@ -640,6 +641,7 @@ void LibraryCatalogSystem::buildBooksPrimaryIndex() {
     // Read the Relative Record Number (RRN)
     booksFile >> RRN;
     booksPrimaryIndexFileName.clear(); // Clear existing index
+    booksPrimaryIndex.clear();
 
     while (!booksFile.eof()) {
         std::streampos position = booksFile.tellg(); // Get the position before reading the record
@@ -745,6 +747,7 @@ void LibraryCatalogSystem::buildBooksSecondaryIndex() {
     booksSecondaryIndexFileName.clear(); // Clear existing secondary index
     booksInvertedList.clear(); // Clear existing Invented List
     booksInvertedIndex.invertedList.clear();
+    booksSecondaryIndex.clear();
     for (const auto &index : booksPrimaryIndex){
         // Read the book record using the position from the primary index
         std::ifstream booksFile(booksFileName, std::ios::in | std::ios::binary);
@@ -854,6 +857,7 @@ void LibraryCatalogSystem::buildAuthorsSecondaryIndex(){
     authorsSecondaryIndexFileName.clear(); // Clear existing secondary index
     authorsInvertedList.clear(); // Clear existing Invented List
     authorsInvertedIndex.invertedList.clear();
+    authorsSecondaryIndex.clear();
     int currentIndex = 0;
     for (const auto &index : authorsPrimaryIndex) {
         // Read the author record using the position from the primary index
@@ -997,7 +1001,7 @@ void LibraryCatalogSystem::saveAuthorsSecondaryIndex(){
     std::ofstream indexFile("authors_secondary_index.txt", std::ios::out);
 
     if (!indexFile.is_open()) {
-        std::cerr << "Error opening authors_secondary_index.dat\n";
+        std::cerr << "Error opening authors_secondary_index.txt\n";
         return;
     }
 
