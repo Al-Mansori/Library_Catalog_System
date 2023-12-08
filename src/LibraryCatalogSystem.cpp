@@ -16,7 +16,7 @@ void LibraryCatalogSystem::updateAuthor(const AuthorRecord& updatedAuthor) {
 void LibraryCatalogSystem::addBook(const BookRecord &book)
 {
     // Implementation
-    fstream file("book.txt", ios::in);
+    fstream file(booksFileName, ios::in);
     string RRN;
     file >> RRN;
     file.close();
@@ -29,6 +29,7 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
     {
         newBook.ISBN[i] = ISBN[i];
     }
+    newBook.ISBN[ISBN.size()]='\0';
 
     cout << "\nEnter Book Title: ";
     string bookTitle;
@@ -52,10 +53,10 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
 
     if (resultBook.ISBN != newBook.ISBN)
     {
-        fstream file("book.txt", ios::app);
+        fstream file(booksFileName, ios::app);
         if (RRN == "-1")
         {
-            file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+            file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
         }
 
         else
@@ -76,7 +77,7 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
                 if (stoi(recordSize) >= newBookRecordSize)
                 {
 
-                    file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+                    file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
                     if (stoi(recordSize) - newBookRecordSize >= 1)
                     {
                         file << "*";
@@ -98,7 +99,7 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
                     if (tempRRN == "-1")
                     {
                         file.seekp(ios_base::end);
-                        file << '$' << newBookRecordSize << newBook.ISBN << newBook.bookTitle << newBook.authorID << '$';
+                        file << '$' << newBookRecordSize+2 << newBook.ISBN <<"|"<< newBook.bookTitle <<"|"<< newBook.authorID << '$';
                         break;
                     }
                     pastRRN = tempRRN;
@@ -112,7 +113,6 @@ void LibraryCatalogSystem::addBook(const BookRecord &book)
         cout << "\nBook is already exist! \n";
     }
 }
-
 void LibraryCatalogSystem::deleteBook(const char* ISBN) {
     // Implementation
 }
