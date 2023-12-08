@@ -59,6 +59,8 @@ void LibraryCatalogSystem::addBook() //TESTED
         fstream file(booksFileName, ios::in | ios::out);
         if (RRN == "-1")
         {
+            file.seekp(0,ios::end);
+            file.seekg(0,ios::end);
             file << '$' << newBookRecordSize+2 << ISBN <<"|"<< bookTitle <<"|"<< authorID << '$';
 
         }
