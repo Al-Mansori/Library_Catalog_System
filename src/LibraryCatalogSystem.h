@@ -69,9 +69,9 @@ private:
 
 public:
     // Function declarations for CRUD operations
-    void addAuthor(const AuthorRecord& author);
+    void addAuthor();
     void deleteAuthor(const char* authorID);
-    void updateAuthor(const AuthorRecord& updatedAuthor);
+    void updateAuthor();
 
     void addBook();
     void deleteBook(const char* ISBN);

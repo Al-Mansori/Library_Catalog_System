@@ -1,16 +1,255 @@
 #include "LibraryCatalogSystem.h"
 using namespace std;
 
-void LibraryCatalogSystem::addAuthor(const AuthorRecord& author) {
+void LibraryCatalogSystem::addAuthor() {
     // Implementation
+    fstream file(authorsFileName, ios::in);
+    string RRN;
+    file >> RRN;
+    file.close();
+    AuthorRecord newAuthor;
+
+    cout << "\nEnter Author ID: ";
+    string ID;
+    cin >> ID;
+    for (int i = 0; i < ID.size(); i++)
+    {
+        newAuthor.authorID[i] = ID[i];
+    }
+    newAuthor.authorID[ID.size()]='\0';
+
+
+    AuthorRecord resultAuthor = searchAuthorByID(newAuthor.authorID);
+
+    if (string(resultAuthor.authorID) != string( newAuthor.authorID))
+    {
+        cout << "\nEnter Author name: ";
+        string AuthorName;
+        cin.ignore();
+        getline(cin, AuthorName);
+
+
+
+
+        for (int i = 0; i < AuthorName.size(); i++)
+        {
+            newAuthor.authorName[i] = AuthorName[i];
+        }
+
+        cout << "\nEnter Author Address: \n";
+        string AuthorAdd;
+        getline(cin, AuthorAdd);
+
+
+        for (int i = 0; i < AuthorAdd.size(); i++)
+        {
+            newAuthor.address[i] = AuthorAdd[i];
+        }
+
+        int RecordSize = ID.size() + AuthorName.size() + AuthorAdd.size();
+
+
+
+        fstream file(authorsFileName, ios::in | ios::out);
+        if (RRN == "-1")
+        {
+            file.seekp(0,ios::end);
+            file.seekg(0,ios::end);
+            file << '$' << RecordSize+2 << ID <<"|"<< AuthorName <<"|"<< AuthorAdd << '$';
+
+        }
+
+        else
+        {
+            string tempRRN = RRN;
+            string nextRRN;
+            string prevRRN = "-1";
+            string recordSize;
+
+            while (true)
+            {
+
+                file.seekg(stoi(tempRRN), ios::beg);
+                file.seekp(stoi(tempRRN), ios::beg);
+
+                char del;
+                file>>del; // get the * char
+
+
+
+                getline(file, nextRRN, '|');
+                getline(file, recordSize, '|');
+                if (stoi(recordSize) >= RecordSize)
+                {
+                    file.seekp(stoi(tempRRN), ios::beg);
+                    file << '$' << RecordSize+2 << ID <<"|"<< AuthorName <<"|"<< AuthorAdd << '$';
+
+                    if (stoi(recordSize) - RecordSize > 1)
+                    {
+                        file << "*";
+                    }
+
+                    file.seekp(ios::beg);
+
+
+
+
+                    if(RRN.size()<=prevRRN.size()){
+
+                        file<<prevRRN;
+                        RRN = prevRRN;
+                    }
+                    else{
+                        file<<prevRRN;
+                        for (int i = 0; i < (RRN.size()-prevRRN.size()); ++i) {
+                            file<<" ";
+                        }
+                    }
+
+
+                    break;
+                }
+
+                else
+                {
+                    if (tempRRN == "-1")
+                    {
+                        file.seekp(ios::end);
+                        file << '$' << RecordSize+2 << ID <<"|"<< AuthorName <<"|"<< AuthorAdd << '$';
+
+                        break;
+                    }
+                    else{
+
+                        prevRRN = tempRRN;
+                        tempRRN = nextRRN;
+                    }
+                }
+            }
+        }
+        cout<<"\nsuccessfully Added!\n";
+
+        file.close();
+    }
+    else
+    {
+        cout << "\nAuthor is already exist!\n";
+        }
+
 }
 
 void LibraryCatalogSystem::deleteAuthor(const char* authorID) {
     // Implementation
+    int res = getPositionsAuthorByID(authorID);
+    if(res != -1){
+        fstream file (authorsFileName,ios::in|ios::out);
+
+        string RRN;
+        file>>RRN;
+        file.seekg(res,ios::beg);
+        char recordSize[2];
+        char del;
+        file>>del;
+        file.read( recordSize,2);
+
+
+        file.seekp(res,ios::beg);
+        file<<"*";
+        file<<RRN<<"|"<<stoi(recordSize)<<"|";
+
+        file.seekp(ios::beg);
+
+        if(RRN.size()<=to_string(res).size()){
+
+            file<<res;
+            RRN = to_string(res);
+        }
+        else{
+            file<<res;
+            for (int i = 0; i < (RRN.size()-to_string(res).size()); ++i) {
+                file<<" ";
+            }
+        }
+
+        cout<<"\nsuccessfully deleted!\n";
+        file.close();
+    }
+    else{
+        cout<<"\nAuthor doesn't exist!\n";
+        }
 }
 
-void LibraryCatalogSystem::updateAuthor(const AuthorRecord& updatedAuthor) {
-    // Implementation
+void LibraryCatalogSystem::updateAuthor() {
+    cout<<"\nEnter Author ID to Update the Author's name: ";
+    string ID;
+    cin>>ID;
+
+
+
+    int res = getPositionsAuthorByID(ID.c_str());
+    if(res != -1){
+        fstream file (authorsFileName,ios::in | ios::out);
+        cout<<"\nEnter New name : ";
+        string newName;
+        cin.ignore();
+        getline(cin, newName);
+        string recordName;
+        string temp;
+
+        file.seekg(res,ios::beg);
+
+        getline(file, temp, '|');
+        char del;
+        file>>del;
+        getline(file, recordName, '|');
+
+        if(recordName.size()>= newName.size()){
+            file.seekp((res+temp.size()+1),ios::beg);
+            file<<newName;
+            for (int i = 0; i < (recordName.size() - newName.size())+1; ++i) {
+                file<<" ";
+            }
+        }
+        else{
+
+            file.seekg(res ,ios::beg);
+            char del;
+            file>>del;
+
+            char size[2];
+            file.read(size,2);
+
+
+
+            string idRecord;
+            string nameRecord;
+            string addRecord;
+            getline(file,idRecord,'|');
+
+            getline(file,nameRecord,'|');
+
+            getline(file,addRecord,'$');
+
+
+
+            deleteAuthor(ID.c_str());
+
+            int newSize = idRecord.size()+nameRecord.size()+addRecord.size()+2;
+
+            file.close();
+            fstream  file(authorsFileName,ios::app)   ;
+
+
+            file<<"$"<<newSize<<idRecord<<'|'<<nameRecord<<'|'<<addRecord<<'$';
+
+        }
+        cout<<"\nsuccessfully Updated!\n";
+
+        file.close();
+    }
+    else{
+        cout<<"\nAuthor doesn't exist!\n";
+        }
 }
 
 void LibraryCatalogSystem::addBook() //TESTED
@@ -38,7 +277,8 @@ void LibraryCatalogSystem::addBook() //TESTED
     {
         cout << "\nEnter Book Title: ";
         string bookTitle;
-        cin >> bookTitle;
+        cin.ignore();
+        getline(cin, bookTitle);
         for (size_t i = 0; i < bookTitle.size(); i++)
         {
             newBook.bookTitle[i] = bookTitle[i];
@@ -200,7 +440,8 @@ void LibraryCatalogSystem::updateBook() {//TESTED
         fstream file (booksFileName,ios::in | ios::out);
         cout<<"\nEnter New Title : ";
         string newTitle;
-        cin>>newTitle;
+        cin.ignore();
+        getline(cin, newTitle);
         string recordTitle;
         string temp;
 
@@ -1184,12 +1425,13 @@ void LibraryCatalogSystem::run() {
 
         switch (choice) {
             case 1:
+                addAuthor();
                 break;
             case 2:
                     addBook();
                 break;
             case 3:
-                // Update Author Name (Author ID) logic
+                updateAuthor();
                 break;
             case 4:
                 updateBook();
@@ -1203,8 +1445,12 @@ void LibraryCatalogSystem::run() {
 
             }
                 break;
-            case 6:
-                // Delete Author (Author ID) logic
+            case 6:{
+                cout<<"\nEnter Author ID to Delete the Author: ";
+                string ID;
+                cin>>ID;
+                deleteAuthor(ID.c_str());
+            }
                 break;
             case 7:
                 cout << "Enter Author ID: ";
